@@ -433,7 +433,7 @@ module Watir
     def locate_dom_element(method)
       assert_exists
 
-      e = execute_atom :getParentElement, @element, :parentElement
+      e = execute_atom method, @element
 
       if e.kind_of?(Selenium::WebDriver::Element)
         Watir.element_class_for(e.tag_name.downcase).new(@parent, :element => e)
