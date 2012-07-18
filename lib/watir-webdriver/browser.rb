@@ -46,6 +46,8 @@ module Watir
 
     def inspect
       '#<%s:0x%x url=%s title=%s>' % [self.class, hash*2, url.inspect, title.inspect]
+    rescue
+      '#<%s:0x%x closed=%s>' % [self.class, hash*2, @closed.to_s]
     end
 
     #
@@ -91,6 +93,10 @@ module Watir
       @cookies ||= Cookies.new driver.manage
     end
 
+    def name
+      @driver.browser
+    end
+
     def text
       @driver.find_element(:tag_name, "body").text
     end
@@ -98,6 +104,10 @@ module Watir
     def html
       # use body.html instead?
       @driver.page_source
+    end
+
+    def alert
+      Alert.new driver.switch_to
     end
 
     def refresh
@@ -128,6 +138,19 @@ module Watir
 
     def send_keys(*args)
       @driver.switch_to.active_element.send_keys(*args)
+    end
+
+    #
+    # Handles screenshot of current pages.
+    #
+    # @example
+    #   browser.screenshot.save("screenshot.png")
+    #
+    # @return [Watir::Screenshot]
+    #
+
+    def screenshot
+      Screenshot.new driver
     end
 
     def add_checker(checker = nil, &block)

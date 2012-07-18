@@ -11,11 +11,19 @@ module Watir
     end
 
     def add(name, value, opts = {})
-      @control.add_cookie :name    => name,
-                          :value   => value,
-                          :secure  => opts[:secure],
-                          :path    => opts[:path],
-                          :expires => opts[:expires]
+      cookie = {
+        :name    => name,
+        :value   => value,
+        :secure  => opts[:secure],
+        :path    => opts[:path],
+        :expires => opts[:expires],
+      }
+
+      if opts[:domain]
+        cookie[:domain] = opts[:domain]
+      end
+
+      @control.add_cookie cookie
     end
 
     def delete(name)
@@ -32,7 +40,7 @@ module Watir
       if t.respond_to?(:to_time)
         t.to_time
       else
-        Time.local t.year, t.month, t.day, t.hour, t.min, t.sec
+        ::Time.local t.year, t.month, t.day, t.hour, t.min, t.sec
       end
     end
   end
