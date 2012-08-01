@@ -92,3 +92,13 @@ YARD::Rake::YardocTask.new do |task|
 end
 
 load "spec/watirspec/watirspec.rake" if File.exist?("spec/watirspec/watirspec.rake")
+
+desc "deploy the gem to the gem server; must be run on on gem server"
+task :deploy => [:clean, :gems] do
+  gemserver=ENV['GEM_SERVER']
+  ssh_options='-o User=root -o IdentityFile=~/.ssh/0-default.private -o StrictHostKeyChecking=no -o CheckHostIP=no -o UserKnownHostsFile=/dev/null'
+  temp_dir=`ssh #{ssh_options} #{gemserver} 'mktemp -d'`.strip
+  system("scp #{ssh_options} gems/*.gem '#{gemserver}:#{temp_dir}'")
+  system("ssh #{ssh_options} #{gemserver} 'gem install --local --no-ri #{temp_dir}/*.gem --ignore-dependencies'")
+  system("ssh #{ssh_options} #{gemserver} 'rm -rf #{temp_dir}'")
+end
