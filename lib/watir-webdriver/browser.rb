@@ -98,7 +98,7 @@ module Watir
     end
 
     def text
-      @driver.find_element(:tag_name, "body").text
+      @driver.find_element(:tag_name, "body").text.strip
     end
 
     def html
