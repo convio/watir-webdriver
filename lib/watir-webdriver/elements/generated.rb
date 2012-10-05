@@ -2387,11 +2387,7 @@ module Watir
    #
 
    def table(*args)
-     selector = extract_selector(args).merge(:tag_name => "table")
-     if selector.key?(:text) && selector[:text].kind_of?(Regexp)
-       tables.each {|table| return table if selector[:text].match(table.text)}
-     end
-
+     regex_workaround(:table, *args)
      Table.new(self, extract_selector(args).merge(:tag_name => "table"))
    end
 
@@ -2426,12 +2422,8 @@ module Watir
    #
 
    def td(*args)
-     selector = extract_selector(args).merge(:tag_name => "td")
-     if selector.key?(:text) && selector[:text].kind_of?(Regexp)
-       tds.each {|td| return td if selector[:text].match(td.text)}
-     end
-
-     TableDataCell.new(self, selector)
+     regex_workaround(:td, *args)
+     TableDataCell.new(self, extract_selector(args).merge(:tag_name => "td"))
    end
 
    #
@@ -2549,13 +2541,18 @@ module Watir
    # @return [TableRow]
    #
 
-   def tr(*args)
-     selector = extract_selector(args).merge(:tag_name => "tr")
-     if selector.key?(:text) && selector[:text].kind_of?(Regexp)
-       trs.each {|tr| return tr if selector[:text].match(tr.text)}
-     end
+   def regex_workaround(method, *args)
+     selector = extract_selector(args)
+     return unless selector.key?(:text) && selector[:text].kind_of?(Regexp)
+     partial_selector = selector.dup
+     partial_selector.delete(:text)
+     element_collection = send "#{method}s".to_sym, partial_selector
+     element_collection.each {|element| return element if selector[:text].match(element.text)}
+   end
 
-     TableRow.new(self, selector)
+   def tr(*args)
+     regex_workaround(:trs, *args)
+     TableRow.new(self, extract_selector(args).merge(:tag_name => "tr"))
    end
 
    #
