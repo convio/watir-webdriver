@@ -2551,7 +2551,7 @@ module Watir
    end
 
    def tr(*args)
-     regex_workaround(:trs, *args)
+     regex_workaround(:tr, *args)
      TableRow.new(self, extract_selector(args).merge(:tag_name => "tr"))
    end
 
