@@ -2387,6 +2387,11 @@ module Watir
    #
 
    def table(*args)
+     selector = extract_selector(args).merge(:tag_name => "table")
+     if selector.key?(:text) && selector[:text].kind_of?(Regexp)
+       tables.each {|table| return table if selector[:text].match(table.text)}
+     end
+
      Table.new(self, extract_selector(args).merge(:tag_name => "table"))
    end
 
@@ -2421,7 +2426,12 @@ module Watir
    #
 
    def td(*args)
-     TableDataCell.new(self, extract_selector(args).merge(:tag_name => "td"))
+     selector = extract_selector(args).merge(:tag_name => "td")
+     if selector.key?(:text) && selector[:text].kind_of?(Regexp)
+       tds.each {|td| return td if selector[:text].match(td.text)}
+     end
+
+     TableDataCell.new(self, selector)
    end
 
    #
@@ -2540,7 +2550,12 @@ module Watir
    #
 
    def tr(*args)
-     TableRow.new(self, extract_selector(args).merge(:tag_name => "tr"))
+     selector = extract_selector(args).merge(:tag_name => "tr")
+     if selector.key?(:text) && selector[:text].kind_of?(Regexp)
+       trs.each {|tr| return tr if selector[:text].match(tr.text)}
+     end
+
+     TableRow.new(self, selector)
    end
 
    #
