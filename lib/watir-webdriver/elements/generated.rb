@@ -2387,7 +2387,7 @@ module Watir
    #
 
    def table(*args)
-     regex_workaround(:table, *args) || Table.new(self, extract_selector(args).merge(:tag_name => "table"))
+     Table.new(self, extract_selector(args).merge(:tag_name => "table"))
    end
 
    #
@@ -2421,7 +2421,7 @@ module Watir
    #
 
    def td(*args)
-     regex_workaround(:td, *args) ||  TableDataCell.new(self, extract_selector(args).merge(:tag_name => "td"))
+     TableDataCell.new(self, extract_selector(args).merge(:tag_name => "td"))
    end
 
    #
@@ -2539,17 +2539,8 @@ module Watir
    # @return [TableRow]
    #
 
-   def regex_workaround(method, *args)
-     selector = extract_selector(args)
-     return unless selector.key?(:text) && selector[:text].kind_of?(Regexp)
-     partial_selector = selector.dup
-     partial_selector.delete(:text)
-     element_collection = send "#{method}s".to_sym, partial_selector
-     element_collection.each {|element| return element if selector[:text].match(element.text)}
-   end
-
    def tr(*args)
-     regex_workaround(:tr, *args) || TableRow.new(self, extract_selector(args).merge(:tag_name => "tr"))
+     TableRow.new(self, extract_selector(args).merge(:tag_name => "tr"))
    end
 
    #
