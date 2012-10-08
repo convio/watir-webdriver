@@ -2387,8 +2387,7 @@ module Watir
    #
 
    def table(*args)
-     regex_workaround(:table, *args)
-     Table.new(self, extract_selector(args).merge(:tag_name => "table"))
+     regex_workaround(:table, *args) || Table.new(self, extract_selector(args).merge(:tag_name => "table"))
    end
 
    #
@@ -2422,8 +2421,7 @@ module Watir
    #
 
    def td(*args)
-     regex_workaround(:td, *args)
-     TableDataCell.new(self, extract_selector(args).merge(:tag_name => "td"))
+     regex_workaround(:td, *args) ||  TableDataCell.new(self, extract_selector(args).merge(:tag_name => "td"))
    end
 
    #
@@ -2551,8 +2549,7 @@ module Watir
    end
 
    def tr(*args)
-     regex_workaround(:tr, *args)
-     TableRow.new(self, extract_selector(args).merge(:tag_name => "tr"))
+     regex_workaround(:tr, *args) || TableRow.new(self, extract_selector(args).merge(:tag_name => "tr"))
    end
 
    #
