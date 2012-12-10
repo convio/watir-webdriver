@@ -21,5 +21,5 @@ module Watir
       driver.execute_script(script, *arguments)
     end
 
-  end
-end
+  end # Atoms
+end # Watir

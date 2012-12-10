@@ -329,6 +329,10 @@ module Watir
         return false
       end
 
+      if selectors[:tag_name] == 'input' && selectors.has_key?(:type)
+        return false
+      end
+
       if selectors.has_key?(:class) && selectors[:class] !~ /^[\w-]+$/ui
         return false
       end
@@ -369,6 +373,10 @@ module Watir
       when :href
         # TODO: change this behaviour?
         'normalize-space(@href)'
+      when :type
+        # type attributes can be upper case - downcase them
+        # https://github.com/watir/watir-webdriver/issues/72
+        XpathSupport.downcase('@type')
       else
         "@#{key.to_s.gsub("_", "-")}"
       end
