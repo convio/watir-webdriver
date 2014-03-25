@@ -404,9 +404,17 @@ module Watir
       false
     end
 
+    #
+    # Returns true if the element is fresh on the page
+    #
+    # @return [Boolean]
+    # @see Watir::Wait
+    #
+
     def fresh?
       begin
         present?
+        true
       rescue Selenium::WebDriver::Error::StaleElementReferenceError
         false
       end
