@@ -148,7 +148,7 @@ module Watir
 
       Watir::Wait.until(timeout) { fresh? }
       if block_given?
-        yeild self
+        yield self
       else
         WhenFreshDecorator.new(self, timeout, message)
       end
