@@ -404,6 +404,14 @@ module Watir
       false
     end
 
+    def fresh?
+      begin
+        present?
+      rescue Selenium::WebDriver::Error::StaleElementReferenceError
+        false
+      end
+    end
+
     #
     # Returns given style property of this element.
     #

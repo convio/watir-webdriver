@@ -101,6 +101,16 @@ module Watir
     end
   end # WhenPresentDecorator
 
+  class WhenFreshDecorator < WhenPresentDecorator
+
+    def method_missing(m, *args, &block)
+      unless @element.respond_to?(m)
+        raise NoMethodError, "undefined method `#{m}' for #{@element.inspect}:#{@element.class}"
+      end
+      @element.__send__(m, *args, &block)
+    end
+  end
+
   #
   # Convenience methods for things that eventually become present.
   #
@@ -130,6 +140,17 @@ module Watir
         yield self
       else
         WhenPresentDecorator.new(self, timeout, message)
+      end
+    end
+
+    def when_fresh(timeout = 30)
+      message = "waiting for #{selector_string} to become so fresh and so clean"
+
+      Watir::Wait.until(timeout) { fresh? }
+      if block_given?
+        yeild self
+      else
+        WhenFreshDecorator.new(self, timeout, message)
       end
     end
 
