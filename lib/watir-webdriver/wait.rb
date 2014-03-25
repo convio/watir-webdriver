@@ -143,6 +143,20 @@ module Watir
       end
     end
 
+    #
+    # Waits until the element is fresh.
+    #
+    # @example
+    #   browser.button(:id => 'foo').when_fresh.click
+    #   browser.div(:id => 'bar').when_fresh { |div| ... }
+    #   browser.p(:id => 'baz').when_fresh(60).text
+    #
+    # @param [Fixnum] timeout seconds to wait before timing out
+    #
+    # @see Watir::Wait
+    # @see Watir::Element#fresh?
+    #
+
     def when_fresh(timeout = 30)
       message = "waiting for #{selector_string} to become so fresh and so clean"
 
