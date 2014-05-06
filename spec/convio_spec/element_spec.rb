@@ -11,11 +11,11 @@ describe "Element" do
     it "gets the next sibling of this element" do
       sib = browser.text_field(:id, "new_user_email").next_sibling.next_sibling
       sib.should be_instance_of(Label)
-      sib.text.should == 'Country'
+      sib.text.should == 'Email address (confirmation)'
     end
 
     it "returns nil if the element has no next sibling" do
-      browser.file_field(:id, "new_user_teeth").next_sibling.should be_nil
+      browser.text_field(:id, "html5_email").next_sibling.should be_nil
     end
   end
 
