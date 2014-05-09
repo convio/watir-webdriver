@@ -36,7 +36,7 @@ module Watir
 
         [ :scope,
           [:block,
-            element_class(interface.name, interface.members.select { |e| e.kind_of?(WebIDL::Ast::Attribute) }, parent),
+            element_class(interface.name, extract_attributes(interface), parent),
             collection_class(interface.name)
           ]
         ]
@@ -89,6 +89,13 @@ module Watir
         ]
       end
 
+      def extract_attributes(interface)
+        members = interface.members
+        members += interface.implements.flat_map(&:members)
+
+        members.select { |e| e.kind_of?(WebIDL::Ast::Attribute) }
+      end
+
       def collection_class(name)
         return if @already_defined.include?(name)
         @already_defined << name
@@ -114,7 +121,7 @@ module Watir
           type = ruby_type_for(a.type)
           attrs[type] << ruby_attribute_for(type, a.name)
         end
-        
+
         call :attributes, [literal_hash(attrs)]
       end
 
@@ -152,7 +159,7 @@ module Watir
           :function
         when 'Boolean'
           :bool
-        when 'Document'
+        when 'Document', 'DocumentFragment'
           :document
         when 'DOMTokenList', 'DOMSettableTokenList'
           :token_list
@@ -173,7 +180,8 @@ module Watir
         when 'Element'
           :element
         when 'WindowProxy', 'ValidityState', 'MediaError', 'TimeRanges', 'Location',
-             'Any', 'TimedTrackArray', 'TimedTrack', 'TextTrackArray', 'TextTrack', 'MediaController'
+             'Any', 'TimedTrackArray', 'TimedTrack', 'TextTrackArray', 'TextTrack',
+             'MediaController', 'TextTrackKind'
           # probably completely wrong.
           :string
         else

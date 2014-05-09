@@ -1,4 +1,7 @@
 # encoding: utf-8
+require 'forwardable'
+require 'watir-webdriver/wait/timer'
+
 module Watir
   module Wait
 
@@ -6,7 +9,22 @@ module Watir
 
     INTERVAL = 0.1
 
+
     class << self
+
+      #
+      # @!attribute timer
+      #   Access Watir timer implementation in use.
+      #   @see Timer
+      #   @return [#wait]
+      #
+
+      attr_writer :timer
+
+      def timer
+        @timer ||= Timer.new
+      end
+
       #
       # Waits until the block evaluates to true or times out.
       #
@@ -18,10 +36,10 @@ module Watir
       # @raise [TimeoutError] if timeout is exceeded
       #
 
-      def until(timeout = 30, message = nil, &block)
-        end_time = ::Time.now + timeout
+      def until(timeout = nil, message = nil, &block)
+        timeout ||= Watir.default_timeout
 
-        until ::Time.now > end_time
+        timer.wait(timeout) do
           result = yield(self)
           return result if result
           sleep INTERVAL
@@ -41,10 +59,10 @@ module Watir
       # @raise [TimeoutError] if timeout is exceeded
       #
 
-      def while(timeout = 30, message = nil, &block)
-        end_time = ::Time.now + timeout
+      def while(timeout = nil, message = nil, &block)
+        timeout ||= Watir.default_timeout
 
-        until ::Time.now > end_time
+        timer.wait(timeout) do
           return unless yield(self)
           sleep INTERVAL
         end
@@ -80,6 +98,10 @@ module Watir
   #
 
   class WhenPresentDecorator
+    extend Forwardable
+
+    def_delegator :@element, :present?
+
     def initialize(element, timeout, message = nil)
       @element = element
       @timeout = timeout
@@ -132,7 +154,8 @@ module Watir
     # @see Watir::Element#present?
     #
 
-    def when_present(timeout = 30)
+    def when_present(timeout = nil)
+      timeout ||= Watir.default_timeout
       message = "waiting for #{selector_string} to become present"
 
       if block_given?
@@ -180,7 +203,8 @@ module Watir
     # @see Watir::Element#present?
     #
 
-    def wait_until_present(timeout = 30)
+    def wait_until_present(timeout = nil)
+      timeout ||= Watir.default_timeout
       message = "waiting for #{selector_string} to become present"
       Watir::Wait.until(timeout, message) { present? }
     end
@@ -197,7 +221,8 @@ module Watir
     # @see Watir::Element#present?
     #
 
-    def wait_while_present(timeout = 30)
+    def wait_while_present(timeout = nil)
+      timeout ||= Watir.default_timeout
       message = "waiting for #{selector_string} to disappear"
       Watir::Wait.while(timeout, message) { present? }
     rescue Selenium::WebDriver::Error::ObsoleteElementError

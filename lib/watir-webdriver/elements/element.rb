@@ -275,6 +275,23 @@ module Watir
     end
 
     #
+    # Returns outer (inner + element itself) HTML code of element.
+    #
+    # @example
+    #   browser.div(:id => "foo").html
+    #   #=> "<div id=\"foo\"><a>Click</a></div>"
+    #
+    # @return [String]
+    #
+
+    def outer_html
+      assert_exists
+      execute_atom(:getOuterHtml, @element).strip
+    end
+
+    alias_method :html, :outer_html
+
+    #
     # Returns inner HTML code of element.
     #
     # @example
@@ -284,9 +301,9 @@ module Watir
     # @return [String]
     #
 
-    def html
+    def inner_html
       assert_exists
-      execute_atom(:getOuterHtml, @element).strip
+      execute_atom(:getInnerHtml, @element).strip
     end
 
     #
@@ -548,7 +565,10 @@ module Watir
 
     def assert_writable
       assert_enabled
-      raise ObjectReadOnlyException if respond_to?(:readonly?) && readonly?
+
+      if respond_to?(:readonly?) && readonly?
+        raise ObjectReadOnlyException, "object is read only #{selector_string}"
+      end
     end
 
     def assert_has_input_devices_for(name)
@@ -565,7 +585,7 @@ module Watir
 
     def method_missing(meth, *args, &blk)
       method = meth.to_s
-      if method =~ /^data_(.+)$/
+      if method =~ ElementLocator::WILDCARD_ATTRIBUTE
         attribute_value(method.gsub(/_/, '-'), *args)
       else
         super

@@ -2,7 +2,7 @@ require 'active_support/ordered_hash'
 
 module LocatorSpecHelper
   def driver
-    @driver ||= mock(Selenium::WebDriver::Driver)
+    @driver ||= double(Selenium::WebDriver::Driver)
   end
 
   def locator(selector, attrs)
@@ -11,11 +11,11 @@ module LocatorSpecHelper
   end
 
   def expect_one(*args)
-    driver.should_receive(:find_element).with(*args)
+    expect(driver).to receive(:find_element).with(*args)
   end
 
   def expect_all(*args)
-    driver.should_receive(:find_elements).with(*args)
+    expect(driver).to receive(:find_elements).with(*args)
   end
 
   def locate_one(selector, attrs = nil)
@@ -28,10 +28,10 @@ module LocatorSpecHelper
 
   def element(opts = {})
     attrs = opts.delete(:attributes)
-    el = mock(Watir::Element, opts)
+    el = double(Watir::Element, opts)
 
     attrs.each do |key, value|
-      el.stub!(:attribute).with(key).and_return(value)
+      el.stub(:attribute).with(key).and_return(value)
     end if attrs
 
     el

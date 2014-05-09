@@ -108,6 +108,7 @@ module Watir
     #
 
     def url
+      assert_exists
       @driver.current_url
     end
 
@@ -155,7 +156,7 @@ module Watir
     #   browser.name
     #   #=> :chrome
     #
-    # @return [String]
+    # @return [Symbol]
     #
 
     def name

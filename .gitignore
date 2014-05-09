@@ -11,5 +11,7 @@ Gemfile.lock
 *.rbc
 .rbx/*
 chromedriver.log
-.idea
 support/html5.html
+/doc
+.idea
+.ruby-version

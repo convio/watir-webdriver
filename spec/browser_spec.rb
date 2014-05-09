@@ -4,19 +4,18 @@ describe Watir::Browser do
 
   describe ".new" do
     it "passes the args to webdriver" do
-      Selenium::WebDriver.should_receive(:for).with(:firefox, :foo).and_return(nil)
+      expect(Selenium::WebDriver).to receive(:for).with(:firefox, :foo).and_return(nil)
       Watir::Browser.new(:firefox, :foo)
     end
 
     it "takes a Driver instance as argument" do
-      mock_driver = mock(Selenium::WebDriver::Driver)
-      Selenium::WebDriver::Driver.should_receive(:===).with(mock_driver).and_return(true)
-
-      lambda { Watir::Browser.new(mock_driver) }.should_not raise_error
+      mock_driver = double(Selenium::WebDriver::Driver)
+      expect(Selenium::WebDriver::Driver).to receive(:===).with(mock_driver).and_return(true)
+      expect { Watir::Browser.new(mock_driver) }.to_not raise_error
     end
 
     it "raises ArgumentError for invalid args" do
-      lambda { Watir::Browser.new(Object.new) }.should raise_error(ArgumentError)
+      expect { Watir::Browser.new(Object.new) }.to raise_error(ArgumentError)
     end
   end
 
@@ -25,25 +24,25 @@ describe Watir::Browser do
 
     it "wraps elements as Watir objects" do
       returned = browser.execute_script("return document.body")
-      returned.should be_kind_of(Watir::Body)
+      expect(returned).to be_kind_of(Watir::Body)
     end
 
     it "wraps elements in an array" do
       list = browser.execute_script("return [document.body];")
-      list.size.should == 1
-      list.first.should be_kind_of(Watir::Body)
+      expect(list.size).to eq 1
+      expect(list.first).to be_kind_of(Watir::Body)
     end
 
     it "wraps elements in a Hash" do
       hash = browser.execute_script("return {element: document.body};")
-      hash['element'].should be_kind_of(Watir::Body)
+      expect(hash['element']).to be_kind_of(Watir::Body)
     end
 
     it "wraps elements in a deep object" do
       hash = browser.execute_script("return {elements: [document.body], body: {element: document.body }}")
 
-      hash['elements'].first.should be_kind_of(Watir::Body)
-      hash['body']['element'].should be_kind_of(Watir::Body)
+      expect(hash['elements'].first).to be_kind_of(Watir::Body)
+      expect(hash['body']['element']).to be_kind_of(Watir::Body)
     end
   end
 
@@ -52,7 +51,7 @@ describe Watir::Browser do
       browser.goto WatirSpec.url_for "forms_with_input_elements.html"
 
       browser.send_keys "hello"
-      browser.text_field(:id => "new_user_first_name").value.should == "hello"
+      expect(browser.text_field(:id => "new_user_first_name").value).to eq "hello"
     end
 
     it "sends keys to a frame" do
@@ -62,7 +61,7 @@ describe Watir::Browser do
 
       browser.frame.send_keys "hello"
 
-      tf.value.should == "hello"
+      expect(tf.value).to eq "hello"
     end
   end
 
@@ -71,35 +70,35 @@ describe Watir::Browser do
     b.goto WatirSpec.url_for "definition_lists.html"
     b.close
 
-    lambda { b.dl(:id => "experience-list").id }.should raise_error(Error, "browser was closed")
+    expect { b.dl(:id => "experience-list").id }.to raise_error(Error, "browser was closed")
   end
 
   describe "#wait_while" do
     it "delegates to the Wait module" do
-      Wait.should_receive(:while).with(3, "foo").and_yield
+      expect(Wait).to receive(:while).with(3, "foo").and_yield
 
       called = false
       browser.wait_while(3, "foo") { called = true }
 
-      called.should be_true
+      expect(called).to be true
     end
   end
 
   describe "#wait_until" do
     it "delegates to the Wait module" do
-      Wait.should_receive(:until).with(3, "foo").and_yield
+      expect(Wait).to receive(:until).with(3, "foo").and_yield
 
       called = false
       browser.wait_until(3, "foo") { called = true }
 
-      called.should be_true
+      expect(called).to be true
     end
   end
 
   describe "#wait" do
     it "waits until document.readyState == 'complete'" do
-      browser.should_receive(:ready_state).and_return('incomplete')
-      browser.should_receive(:ready_state).and_return('complete')
+      expect(browser).to receive(:ready_state).and_return('incomplete')
+      expect(browser).to receive(:ready_state).and_return('complete')
 
       browser.wait
     end
@@ -107,21 +106,21 @@ describe Watir::Browser do
 
   describe "#ready_state" do
     it "gets the document's readyState property" do
-      browser.should_receive(:execute_script).with('return document.readyState')
+      expect(browser).to receive(:execute_script).with('return document.readyState')
       browser.ready_state
     end
   end
 
   describe "#inspect" do
     it "works even if browser is closed" do
-      browser.should_receive(:url).and_raise(Errno::ECONNREFUSED)
-      lambda { browser.inspect }.should_not raise_error
+      expect(browser).to receive(:url).and_raise(Errno::ECONNREFUSED)
+      expect { browser.inspect }.to_not raise_error
     end
   end
 
   describe '#screenshot' do
     it 'returns an instance of of Watir::Screenshot' do
-      browser.screenshot.should be_kind_of(Watir::Screenshot)
+      expect(browser.screenshot).to be_kind_of(Watir::Screenshot)
     end
   end
 end
