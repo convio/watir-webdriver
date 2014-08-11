@@ -4,6 +4,8 @@ module Watir
   module HTML
     class Generator
 
+      IGNORED_ATTRIBUTES = %w(cells elements hash rows span text)
+
       def generate(spec_url, io = StringIO.new)
         @spec_url, @io = spec_url, io
 
@@ -45,6 +47,13 @@ module Watir
         # ignore the link element for now
         @tag2interfaces.delete("link")
         @sorted_interfaces.reject! { |intf| intf.name == "HTMLLinkElement" }
+        # frame is implemented manually, see https://github.com/watir/watir-webdriver/issues/204
+        @sorted_interfaces.reject! { |intf| intf.name == "HTMLFrameElement"  }
+
+        # cleanup attributes
+        @sorted_interfaces.each do |intf|
+          intf.members.delete_if { |member| IGNORED_ATTRIBUTES.include?(member.name) }
+        end
       end
 
       def write_header
@@ -54,12 +63,16 @@ module Watir
 
       def write_class_defs
         @sorted_interfaces.each do |interface|
-          @io.puts indent(generator.generate(interface))
+          interface = generator.generate(interface)
+          unless interface.empty?
+            interface.gsub!(/^\s+\n/, '') # remove empty lines
+            @io.puts indent(interface)
+          end
         end
       end
 
-
       def write_container_methods
+        @io.puts "\n\n"
         @io.puts indent("module Container")
 
         @tag2interfaces.sort.each do |tag, interfaces|
@@ -73,6 +86,7 @@ module Watir
 
           # visitor.visit_tag(tag, interfaces.first.name) !?
           @io.puts indent(<<-CODE, 3)
+
 #
 # @return [#{element_class}]
 #
@@ -101,9 +115,8 @@ CODE
         @io.puts "end # Watir"
       end
 
-
       def indent(code, indent = 1)
-        indent_string = " "*indent
+        indent_string = "  " * indent
         code.split("\n").map { |line| line.empty? ? line : indent_string + line }.join("\n")
       end
 

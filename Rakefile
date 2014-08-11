@@ -61,7 +61,7 @@ namespace :html5 do
     end
   end
 
-  desc 'Re-enerate the base Watir element classes from the spec '
+  desc 'Re-generate the base Watir element classes from the spec'
   task :generate => :html_lib do
     old_file = "lib/watir-webdriver/elements/generated.rb"
     generator = Watir::HTML::Generator.new
@@ -87,7 +87,6 @@ end # html5
 
 
 require 'yard'
-require "yard/handlers/watir"
 YARD::Rake::YardocTask.new do |task|
   task.options = %w[--debug] # this is pretty slow, so nice with some output
 end

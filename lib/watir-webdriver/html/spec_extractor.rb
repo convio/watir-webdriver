@@ -3,6 +3,10 @@
 module Watir
   module HTML
     class SpecExtractor
+
+      class InterfaceNotFound < StandardError
+      end
+
       def initialize(uri)
         @uri = uri
       end
@@ -29,8 +33,8 @@ module Watir
         process if @interfaces.nil?
 
         sorter.sort.map { |name|
-          @interfaces_by_name[name] or puts "ignoring interface: #{name}"
-        }.flatten.compact
+          @interfaces.find { |i| i.name == name } or puts "ignoring interface: #{name}"
+        }.compact
       end
 
       def print_hierarchy
@@ -39,7 +43,7 @@ module Watir
       end
 
       def fetch_interface(interface)
-        @interfaces_by_name[interface] or raise "#{interface} not found in IDL"
+        @interfaces_by_name[interface] or raise InterfaceNotFound, "#{interface} not found in IDL"
       end
 
       private
@@ -51,11 +55,21 @@ module Watir
       def extract_idl_parts
         parsed = @doc.search("//pre[@class='idl']").map {  |e| parse_idl(e.inner_text) }.compact
 
-        @interfaces = parsed.map { |elements|
-          elements.select { |e| e.kind_of? WebIDL::Ast::Interface  }
-        }.flatten
+        implements = []
+        @interfaces = []
 
-        @interfaces_by_name = @interfaces.group_by { |i| i.name }
+        parsed.flatten.each do |element|
+          case element
+          when WebIDL::Ast::Interface
+            @interfaces << element
+          when WebIDL::Ast::ImplementsStatement
+            implements << element
+          end
+        end
+
+        @interfaces_by_name = @interfaces.group_by(&:name)
+        apply_implements(implements)
+        merge_interfaces
       end
 
       def extract_interface_map
@@ -107,6 +121,33 @@ module Watir
           errors << idl_parser.failure_reason
           nil
         end
+      end
+
+      def apply_implements(implements)
+        implements.each do |is|
+          implementor_name = is.implementor.gsub(/^::/, '')
+          implementee_name = is.implementee.gsub(/^::/, '')
+
+          begin
+            intf = fetch_interface(implementor_name).first
+            intf.implements << fetch_interface(implementee_name).first
+          rescue InterfaceNotFound => ex
+            puts ex.message
+          end
+        end
+      end
+
+      def merge_interfaces
+        non_duplicates = @interfaces.uniq(&:name)
+        duplicates = @interfaces - non_duplicates
+
+        duplicates.each do |intf|
+          final = non_duplicates.find { |i| i.name == intf.name }
+          final.members += intf.members
+          final.extended_attributes += intf.extended_attributes
+        end
+
+        @interfaces = non_duplicates
       end
 
       def idl_parser

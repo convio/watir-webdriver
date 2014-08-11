@@ -41,25 +41,30 @@ module Watir
     def lhs_for(key)
       if @building == :input && key == :text
         "@value"
-      elsif @building == :button && key == :value
-        "text()"
       else
         super
       end
     end
 
-    def matches_selector?(element, rx_selector)
-      rx_selector = rx_selector.dup
-      tag_name    = element.tag_name.downcase
-
-      [:value, :caption].each do |key|
-        if rx_selector.has_key?(key)
-          correct_key = tag_name == 'button' ? :text : :value
-          rx_selector[correct_key] = rx_selector.delete(key)
-        end
+    def equal_pair(key, value)
+      if @building == :button && key == :value
+        # :value should look for both node text and @value attribute
+        text = XpathSupport.escape(value)
+        "(text()=#{text} or @value=#{text})"
+      else
+        super
       end
+    end
 
-      super
+    def matches_selector?(element, selector)
+      if selector.key?(:value)
+        copy  = selector.dup
+        value = copy.delete(:value)
+
+        super(element, copy) && (value === fetch_value(element, :value) || value === fetch_value(element, :text))
+      else
+        super
+      end
     end
 
     def tag_name_matches?(tag_name, _)

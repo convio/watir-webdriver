@@ -13,6 +13,7 @@ require 'watir-webdriver/container'
 require 'watir-webdriver/cookies'
 require 'watir-webdriver/locators/element_locator'
 require 'watir-webdriver/locators/button_locator'
+require 'watir-webdriver/locators/text_area_locator'
 require 'watir-webdriver/locators/text_field_locator'
 require 'watir-webdriver/locators/child_row_locator'
 require 'watir-webdriver/locators/child_cell_locator'
@@ -34,6 +35,18 @@ module Watir
 
     def always_locate=(bool)
       @always_locate = bool
+    end
+
+    def default_timeout
+      @default_timeout ||= 30
+    end
+
+    #
+    # Default wait time for wait methods.
+    #
+
+    def default_timeout=(value)
+      @default_timeout = value
     end
 
     def prefer_css?
@@ -76,13 +89,14 @@ require 'watir-webdriver/element_collection'
 require 'watir-webdriver/elements/element'
 require 'watir-webdriver/elements/generated'
 
+require 'watir-webdriver/elements/area'
 require 'watir-webdriver/elements/button'
 require 'watir-webdriver/elements/checkbox'
 require 'watir-webdriver/elements/dlist'
 require 'watir-webdriver/elements/file_field'
 require 'watir-webdriver/elements/font'
 require 'watir-webdriver/elements/form'
-require 'watir-webdriver/elements/frame'
+require 'watir-webdriver/elements/iframe'
 require 'watir-webdriver/elements/hidden'
 require 'watir-webdriver/elements/image'
 require 'watir-webdriver/elements/input'
