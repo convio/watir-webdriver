@@ -416,7 +416,7 @@ module Watir
 
     def present?
       exists? && visible?
-    rescue Selenium::WebDriver::Error::ObsoleteElementError, Selenium::WebDriver::Error::StaleElementReferenceError, UnknownObjectException
+    rescue Selenium::WebDriver::Error::ObsoleteElementError, UnknownObjectException
       # if the element disappears between the exists? and visible? calls,
       # consider it not present.
       false
@@ -504,14 +504,16 @@ module Watir
         return
       end
 
-      begin
-        @element = (@selector[:element] || locate)
-      rescue Selenium::WebDriver::Error::StaleElementReferenceError
-        @element = nil
-      end
+      @element = @selector[:element]
 
-      unless @element
-        raise UnknownObjectException, "unable to locate element, using #{selector_string}"
+      if @element
+        assert_not_stale
+      else
+        @element = locate
+
+        unless @element
+          raise UnknownObjectException, "unable to locate element, using #{selector_string}"
+        end
       end
     end
 
