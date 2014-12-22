@@ -5,7 +5,7 @@ module Watir
     def locate
       @parent.assert_exists
 
-      locator = locator_class.new(@parent.wd, @selector.merge(:tag_name => tag_name), self.class.attribute_list)
+      locator = locator_class.new(@parent.wd, @selector.merge(:tag_name => frame_tag), self.class.attribute_list)
       element = locator.locate
       element or raise UnknownFrameException, "unable to locate #{@selector[:tag_name]} using #{selector_string}"
 
@@ -45,7 +45,7 @@ module Watir
 
     private
 
-    def tag_name
+    def frame_tag
       'iframe'
     end
 
@@ -69,7 +69,7 @@ module Watir
 
     private
 
-    def tag_name
+    def frame_tag
       'frame'
     end
 

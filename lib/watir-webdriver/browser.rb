@@ -340,7 +340,26 @@ module Watir
     #
 
     def run_checkers
-      @error_checkers.each { |e| e.call(self) }
+      @error_checkers.each { |e| e.call(self) } if !@error_checkers.empty? && window.present?
+    end
+
+    #
+    # Executes a block without running error checkers.
+    #
+    # @example
+    #   browser.without_checkers do
+    #     browser.element(:name => "new_user_button").click
+    #   end
+    #
+    # @yieldparam [Watir::Browser]
+    #
+
+    def without_checkers
+      current_checkers = @error_checkers
+      @error_checkers = []
+      yield(self)
+    ensure
+      @error_checkers = current_checkers
     end
 
     #
@@ -350,7 +369,10 @@ module Watir
     #
 
     def exist?
-      not @closed
+      assert_exists
+      true
+    rescue Exception::NoMatchingWindowFoundException, Exception::Error
+      false
     end
     alias_method :exists?, :exist?
 
@@ -363,6 +385,8 @@ module Watir
     def assert_exists
       if @closed
         raise Exception::Error, "browser was closed"
+      elsif !window.present?
+        raise Exception::NoMatchingWindowFoundException, "browser window was closed"
       else
         driver.switch_to.default_content
         true
