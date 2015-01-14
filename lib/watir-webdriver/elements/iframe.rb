@@ -5,27 +5,20 @@ module Watir
     def locate
       @parent.assert_exists
 
-      locator = locator_class.new(@parent.wd, @selector.merge(:tag_name => tag_name), self.class.attribute_list)
+      locator = locator_class.new(@parent.wd, @selector.merge(:tag_name => frame_tag), self.class.attribute_list)
       element = locator.locate
       element or raise UnknownFrameException, "unable to locate #{@selector[:tag_name]} using #{selector_string}"
 
-      @parent.reset!
-
       FramedDriver.new(element, driver)
+    end
+
+    def switch_to!
+      locate.send :switch!
     end
 
     def assert_exists
       if @selector.has_key? :element
         raise UnknownFrameException, "wrapping a WebDriver element as a Frame is not currently supported"
-      end
-
-      if @element && !Watir.always_locate?
-        begin
-          @element.tag_name # rpc
-          return @element
-        rescue Selenium::WebDriver::Error::ObsoleteElementError
-          @element = nil # re-locate
-        end
       end
 
       super
@@ -36,7 +29,7 @@ module Watir
 
       # this will actually give us the innerHTML instead of the outerHTML of the <frame>,
       # but given the choice this seems more useful
-      execute_atom(:getOuterHtml, @element.find_element(:tag_name => "html")).strip
+      element_call { execute_atom(:getOuterHtml, @element.find_element(:tag_name => "html")).strip }
     end
 
     def execute_script(*args)
@@ -45,7 +38,7 @@ module Watir
 
     private
 
-    def tag_name
+    def frame_tag
       'iframe'
     end
 
@@ -55,11 +48,23 @@ module Watir
   class IFrameCollection < ElementCollection
 
     def to_a
-      (0...elements.size).map { |idx| element_class.new @parent, :index => idx }
+      element_indexes.map { |idx| element_class.new(@parent, tag_name: @selector[:tag_name], :index => idx ) }
     end
 
     def element_class
       IFrame
+    end
+
+    private
+
+    def element_indexes
+      all_elements = locator_class.new(
+          @parent.wd,
+          {tag_name: @selector[:tag_name]},
+          element_class.attribute_list
+      ).locate_all
+
+      elements.map { |el| all_elements.index(el) }
     end
 
   end # IFrameCollection
@@ -69,7 +74,7 @@ module Watir
 
     private
 
-    def tag_name
+    def frame_tag
       'frame'
     end
 
@@ -110,7 +115,7 @@ module Watir
     end
 
     def ==(other)
-      @element == other.wd
+      wd == other.wd
     end
     alias_method :eql?, :==
 
@@ -138,7 +143,8 @@ module Watir
 
     def switch!
       @driver.switch_to.frame @element
-    rescue Selenium::WebDriver::Error::NoSuchFrameError => e
+        # UnknownError is a workaround for Chrome: https://code.google.com/p/chromedriver/issues/detail?id=963
+    rescue Selenium::WebDriver::Error::NoSuchFrameError, Selenium::WebDriver::Error::UnknownError => e
       raise Exception::UnknownFrameException, e.message
     end
 

@@ -1,3 +1,3 @@
 module Watir
-  VERSION = "0.6.10.2"
+  VERSION = "0.7.0.1"
 end
