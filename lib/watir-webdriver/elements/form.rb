@@ -9,7 +9,6 @@ module Watir
     #
 
     def submit
-      assert_exists
       element_call { @element.submit }
       run_checkers
     end

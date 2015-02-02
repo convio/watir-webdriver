@@ -25,8 +25,6 @@ module Watir
     end
 
     def html
-      assert_exists
-
       # this will actually give us the innerHTML instead of the outerHTML of the <frame>,
       # but given the choice this seems more useful
       element_call { execute_atom(:getOuterHtml, @element.find_element(:tag_name => "html")).strip }
