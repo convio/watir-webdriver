@@ -20,10 +20,10 @@ namespace :spec do
   end
 end
 
-task :default => :spec
+task :default => [:spec, 'yard:doctest']
 
 namespace :html5 do
-  SPEC_URI  = "http://www.whatwg.org/specs/web-apps/current-work/"
+  SPEC_URI  = "https://www.whatwg.org/specs/web-apps/current-work/"
   SPEC_PATH = "support/html5.html"
 
   task :html_lib => :lib do
@@ -91,6 +91,11 @@ YARD::Rake::YardocTask.new do |task|
   task.options = %w[--debug] # this is pretty slow, so nice with some output
 end
 
+require 'yard-doctest'
+YARD::Doctest::RakeTask.new do |task|
+  task.doctest_opts = ['-v']
+end
+
 namespace :changes do
   task :differ do
     require './support/version_differ'
@@ -113,13 +118,3 @@ namespace :changes do
 end
 
 load "spec/watirspec/watirspec.rake" if File.exist?("spec/watirspec/watirspec.rake")
-
-desc "deploy the gem to the gem server; must be run on on gem server"
-task :deploy => [:build] do
-  gemserver=ENV['GEM_SERVER']
-  ssh_options='-o User=root -o IdentityFile=~/.ssh/0-default.private -o StrictHostKeyChecking=no -o CheckHostIP=no -o UserKnownHostsFile=/dev/null'
-  temp_dir=`ssh #{ssh_options} #{gemserver} 'mktemp -d'`.strip
-  system("scp #{ssh_options} pkg/*.gem '#{gemserver}:#{temp_dir}'")
-  system("ssh #{ssh_options} #{gemserver} 'gem install --local --no-ri #{temp_dir}/*.gem --ignore-dependencies'")
-  system("ssh #{ssh_options} #{gemserver} 'rm -rf #{temp_dir}'")
-end
