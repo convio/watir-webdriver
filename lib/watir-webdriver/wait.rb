@@ -5,7 +5,8 @@ require 'watir-webdriver/wait/timer'
 module Watir
   module Wait
 
-    class TimeoutError < StandardError ; end
+    class TimeoutError < StandardError;
+    end
 
     INTERVAL = 0.1
 
@@ -119,6 +120,10 @@ module Watir
 
       Watir::Wait.until(@timeout, @message) { @element.present? }
 
+      if @timeout >= Watir.default_timeout
+        warn "#when_present might be unnecessary; elements now automatically wait when getting acted upon"
+      end
+
       @element.__send__(m, *args, &block)
     end
   end # WhenPresentDecorator
@@ -144,8 +149,7 @@ module Watir
     # @see Watir::Element#present?
     #
 
-    def when_present(timeout = nil)
-      timeout ||= Watir.default_timeout
+    def when_present(timeout = Watir.default_timeout)
       message = "waiting for #{selector_string} to become present"
 
       if block_given?

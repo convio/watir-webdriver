@@ -8,11 +8,11 @@ module Watir
     #
 
     def set(*args)
-      assert_exists
-      assert_writable
-
-      @element.clear
-      @element.send_keys(*args)
+      element_call(:wait_for_present) do
+        assert_writable
+        @element.clear
+        @element.send_keys(*args)
+      end
     end
     alias_method :value=, :set
 
@@ -32,8 +32,10 @@ module Watir
     #
 
     def clear
-      assert_exists
-      @element.clear
+      element_call(:wait_for_present) do
+        assert_writable
+        @element.clear
+      end
     end
 
   end # UserEditable

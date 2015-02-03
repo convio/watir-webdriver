@@ -38,8 +38,10 @@ module Watir
       # It is also used to alter behavior of methods locating more than one type of element
       # (e.g. text_field locates both input and textarea)
       validate_element(element) if element
+    rescue Selenium::WebDriver::Error::NoSuchElementError, Selenium::WebDriver::Error::StaleElementReferenceError
+      nil
+    rescue Watir::Exception::UnknownFrameException
       # UnknownFrameException is workaround for- https://code.google.com/p/chromedriver/issues/detail?id=948
-    rescue Selenium::WebDriver::Error::NoSuchElementError, Selenium::WebDriver::Error::StaleElementReferenceError, Watir::Exception::UnknownFrameException
       nil
     end
 

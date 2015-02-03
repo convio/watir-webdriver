@@ -18,8 +18,6 @@ module Watir
     #
 
     def clear
-      assert_exists
-
       raise Error, "you can only clear multi-selects" unless multiple?
 
       options.each do |o|
@@ -34,7 +32,7 @@ module Watir
     #
 
     def options
-      assert_exists
+      wait_for_exists
       super
     end
 
@@ -86,7 +84,6 @@ module Watir
     #
 
     def selected?(str_or_rx)
-      assert_exists
       matches = element_call do
         @element.find_elements(:tag_name, 'option').select do |e|
           str_or_rx === e.text || str_or_rx === e.attribute(:label)
@@ -126,8 +123,6 @@ module Watir
     private
 
     def select_by(how, str_or_rx)
-      assert_exists
-
       case str_or_rx
       when String, Numeric
         select_by_string(how, str_or_rx.to_s)

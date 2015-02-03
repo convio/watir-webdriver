@@ -3,8 +3,6 @@ module Watir
   class IFrame < HTMLElement
 
     def locate
-      @parent.assert_exists
-
       locator = locator_class.new(@parent.wd, @selector.merge(:tag_name => frame_tag), self.class.attribute_list)
       element = locator.locate
       element or raise UnknownFrameException, "unable to locate #{@selector[:tag_name]} using #{selector_string}"
@@ -17,6 +15,8 @@ module Watir
     end
 
     def assert_exists
+      # @selector[:element] would be used for adding IFrame objects to an IFrameCollection,
+      # but current implementation of IFrameCollection is a container of FramedDriver objects
       if @selector.has_key? :element
         raise UnknownFrameException, "wrapping a WebDriver element as a Frame is not currently supported"
       end
@@ -24,9 +24,20 @@ module Watir
       super
     end
 
-    def html
-      assert_exists
+    def wait_for_exists
+      begin
+        Watir::Wait.until { exists? }
+      rescue Watir::Wait::TimeoutError
+        unless Watir.default_timeout == 0
+          warn %(This test has slept for the duration of the default timeout. If your test is passing,
+                 consider using #exists? instead of rescuing this error)
+        end
+        raise Watir::Exception::UnknownFrameException, %(unable to locate frame, using #{selector_string}
+                                                          after waiting #{Watir.default_timeout} seconds)
+      end
+    end
 
+    def html
       # this will actually give us the innerHTML instead of the outerHTML of the <frame>,
       # but given the choice this seems more useful
       element_call { execute_atom(:getOuterHtml, @element.find_element(:tag_name => "html")).strip }
@@ -48,7 +59,7 @@ module Watir
   class IFrameCollection < ElementCollection
 
     def to_a
-      element_indexes.map { |idx| element_class.new(@parent, tag_name: @selector[:tag_name], :index => idx ) }
+      element_indexes.map { |idx| element_class.new(@parent, tag_name: @selector[:tag_name], :index => idx) }
     end
 
     def element_class
@@ -143,8 +154,10 @@ module Watir
 
     def switch!
       @driver.switch_to.frame @element
-        # UnknownError is a workaround for Chrome: https://code.google.com/p/chromedriver/issues/detail?id=963
-    rescue Selenium::WebDriver::Error::NoSuchFrameError, Selenium::WebDriver::Error::UnknownError => e
+    rescue Selenium::WebDriver::Error::NoSuchFrameError => e
+      raise Exception::UnknownFrameException, e.message
+    rescue Selenium::WebDriver::Error::UnknownError => e
+      # UnknownError is a workaround for Chrome: https://code.google.com/p/chromedriver/issues/detail?id=963
       raise Exception::UnknownFrameException, e.message
     end
 

@@ -18,6 +18,17 @@ describe Watir::Element do
     it 'returns false if the element does not exist' do
       expect(browser.div(:id, 'should-not-exist')).to_not be_present
     end
+
+    it "returns false if the element is stale" do
+      wd_element = browser.div(:id => "foo").wd
+
+      # simulate element going stale during lookup
+      allow(browser.driver).to receive(:find_element).with(:id, 'foo') { wd_element }
+      browser.refresh
+
+      expect(browser.div(:id, 'foo')).to_not be_present
+    end
+
   end
 
   describe "#reset!" do
@@ -73,11 +84,14 @@ describe Watir::Element do
 
       watir_element = browser.div(:id => "text")
 
-        # simulate element going stale after assert_exists and before action taken
+        # simulate element going stale after assert_exists and before action taken, but not when block retried
       allow(watir_element).to receive(:text) do
-        watir_element.send :assert_exists
-        browser.refresh
-        watir_element.send(:element_call) { watir_element.instance_variable_get('@element').text }
+        watir_element.send(:element_call) do
+          @already_stale ||= false
+          browser.refresh unless @already_stale
+          @already_stale = true
+          watir_element.instance_variable_get('@element').text
+        end
       end
 
       if Watir.always_locate?

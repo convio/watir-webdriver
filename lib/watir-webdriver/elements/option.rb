@@ -43,7 +43,6 @@ module Watir
     #
 
     def selected?
-      assert_exists
       element_call { @element.selected? }
     end
 
