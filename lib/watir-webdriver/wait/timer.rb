@@ -11,7 +11,11 @@ module Watir
 
       def wait(timeout, &block)
         end_time = ::Time.now + timeout
-        yield(block) until ::Time.now > end_time
+        if timeout == 0
+          yield
+        else
+          yield until ::Time.now > end_time
+        end
       end
 
     end # Timer

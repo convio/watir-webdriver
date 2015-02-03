@@ -3,11 +3,11 @@ module Watir
   class IFrame < HTMLElement
 
     def locate
-      @parent.assert_exists
+      @parent.wait_for_exists
 
       locator = locator_class.new(@parent.wd, @selector.merge(:tag_name => frame_tag), self.class.attribute_list)
       element = locator.locate
-      element or raise UnknownFrameException, "unable to locate #{@selector[:tag_name]} using #{selector_string}"
+      element or raise unknown_exception, "unable to locate #{@selector[:tag_name]} using #{selector_string}"
 
       FramedDriver.new(element, driver)
     end
@@ -17,8 +17,10 @@ module Watir
     end
 
     def assert_exists
+      # @selector[:element] would be used for adding IFrame objects to an IFrameCollection,
+      # but current implementation of IFrameCollection is a container of FramedDriver objects
       if @selector.has_key? :element
-        raise UnknownFrameException, "wrapping a WebDriver element as a Frame is not currently supported"
+        raise unknown_exception, "wrapping a WebDriver element as a Frame is not currently supported"
       end
 
       super
@@ -38,6 +40,10 @@ module Watir
 
     def frame_tag
       'iframe'
+    end
+
+    def unknown_exception
+      Watir::Exception::UnknownFrameException
     end
 
   end # IFrame
