@@ -368,7 +368,7 @@ describe Watir::ElementLocator do
         valid_attributes = Watir::Input.attributes
 
         expect { locate_one(bad_selector, valid_attributes) }.to \
-        raise_error(MissingWayOfFindingObjectException, "invalid attribute: :href")
+        raise_error(Watir::Exception::MissingWayOfFindingObjectException, "invalid attribute: :href")
       end
     end
   end
@@ -380,6 +380,18 @@ describe Watir::ElementLocator do
           expect_all(loc, "bar").and_return([element(:tag_name => "div")])
           locate_all(loc => "bar")
         end
+      end
+    end
+
+    describe "with an empty selector" do
+      it "finds all when an empty selctor is given" do
+        if Watir.prefer_css?
+          expect_all :css, '*'
+        else
+          expect_all :xpath, './/*'
+        end
+
+        locate_all({})
       end
     end
 

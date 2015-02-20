@@ -116,7 +116,8 @@ module Watir
     # Returns true if two windows are equal.
     #
     # @example
-    #   browser.window(:index => 1) == browser.window(:index => 2)
+    #   browser.window(:index => 0) == browser.window(:index => 1)
+    #   #=> false
     #
     # @param [Window] other
     #
@@ -182,8 +183,8 @@ module Watir
     # Switches to given window and executes block, then switches back.
     #
     # @example
-    #   browser.window(:title => "2nd window").use do
-    #     browser.button(:id => "close").click
+    #   browser.window(:title => "closeable window").use do
+    #     browser.a(:id => "close").click
     #   end
     #
 
@@ -196,7 +197,7 @@ module Watir
     protected
 
     def handle
-      @handle ||= locate || raise(Exception::NoMatchingWindowFoundException, @selector.inspect)
+      @handle ||= locate
     end
 
     private
@@ -207,7 +208,9 @@ module Watir
     end
 
     def locate
-      if @selector.has_key?(:index)
+      if @selector.empty?
+        nil
+      elsif @selector.has_key?(:index)
         @driver.window_handles[Integer(@selector[:index])]
       else
         @driver.window_handles.find { |wh| matches?(wh) }

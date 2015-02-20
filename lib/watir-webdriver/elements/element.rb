@@ -60,15 +60,12 @@ module Watir
     # Returns true if two elements are equal.
     #
     # @example
-    #   browser.a(:id => "foo") == browser.a(:id => "foo")
+    #   browser.text_field(:name => "new_user_first_name") == browser.text_field(:name => "new_user_first_name")
     #   #=> true
     #
 
     def ==(other)
-      return false unless other.kind_of? self.class
-
-      assert_exists
-      @element == other.wd
+      other.kind_of?(self.class) && wd == other.wd
     end
     alias_method :eql?, :==
 
@@ -84,7 +81,7 @@ module Watir
 
     def text
       assert_exists
-      @element.text.strip
+      element_call { @element.text }.strip
     end
 
     #
@@ -95,7 +92,7 @@ module Watir
 
     def tag_name
       assert_exists
-      @element.tag_name.downcase
+      element_call { @element.tag_name.downcase }
     end
 
     #
@@ -104,13 +101,13 @@ module Watir
     # and may not work at all.
     #
     # @example Click an element
-    #   element.click
+    #   browser.element(:name => "new_user_button").click
     #
     # @example Click an element with shift key pressed
-    #   element.click(:shift)
+    #   browser.element(:name => "new_user_button").click(:shift)
     #
     # @example Click an element with several modifier keys pressed
-    #   element.click(:shift, :control)
+    #   browser.element(:name => "new_user_button").click(:shift, :control)
     #
     # @param [:shift, :alt, :control, :command, :meta] Modifier key(s) to press while clicking.
     #
@@ -119,17 +116,19 @@ module Watir
       assert_exists
       assert_enabled
 
-      if modifiers.any?
-        assert_has_input_devices_for "click(#{modifiers.join ', '})"
+      element_call do
+        if modifiers.any?
+          assert_has_input_devices_for "click(#{modifiers.join ', '})"
 
-        action = driver.action
-        modifiers.each { |mod| action.key_down mod }
-        action.click @element
-        modifiers.each { |mod| action.key_up mod }
+          action = driver.action
+          modifiers.each { |mod| action.key_down mod }
+          action.click @element
+          modifiers.each { |mod| action.key_up mod }
 
-        action.perform
-      else
-        @element.click
+          action.perform
+        else
+          @element.click
+        end
       end
 
       run_checkers
@@ -140,14 +139,14 @@ module Watir
     # Note that browser support may vary.
     #
     # @example
-    #   browser.a(:id => "foo").double_click
+    #   browser.element(:name => "new_user_button").double_click
     #
 
     def double_click
       assert_exists
       assert_has_input_devices_for :double_click
 
-      driver.action.double_click(@element).perform
+      element_call { driver.action.double_click(@element).perform }
       run_checkers
     end
 
@@ -156,14 +155,14 @@ module Watir
     # Note that browser support may vary.
     #
     # @example
-    #   browser.a(:id => "foo").right_click
+    #   browser.element(:name => "new_user_button").right_click
     #
 
     def right_click
       assert_exists
       assert_has_input_devices_for :right_click
 
-      driver.action.context_click(@element).perform
+      element_call { driver.action.context_click(@element).perform }
       run_checkers
     end
 
@@ -172,14 +171,14 @@ module Watir
     # Note that browser support may vary.
     #
     # @example
-    #   browser.a(:id => "foo").hover
+    #   browser.element(:name => "new_user_button").hover
     #
 
     def hover
       assert_exists
       assert_has_input_devices_for :hover
 
-      driver.action.move_to(@element).perform
+      element_call { driver.action.move_to(@element).perform }
     end
 
     #
@@ -187,9 +186,9 @@ module Watir
     # Note that browser support may vary.
     #
     # @example
-    #    a = browser.div(:id => "draggable")
-    #    b = browser.div(:id => "droppable")
-    #    a.drag_and_drop_on b
+    #   a = browser.div(:id => "draggable")
+    #   b = browser.div(:id => "droppable")
+    #   a.drag_and_drop_on b
     #
 
     def drag_and_drop_on(other)
@@ -197,9 +196,11 @@ module Watir
       assert_exists
       assert_has_input_devices_for :drag_and_drop_on
 
-      driver.action.
-             drag_and_drop(@element, other.wd).
-             perform
+      element_call do
+        driver.action.
+               drag_and_drop(@element, other.wd).
+               perform
+      end
     end
 
     #
@@ -207,7 +208,7 @@ module Watir
     # Note that browser support may vary.
     #
     # @example
-    #    browser.div(:id => "draggable").drag_and_drop_by 100, -200
+    #   browser.div(:id => "draggable").drag_and_drop_by 100, -200
     #
     # @param [Fixnum] right_by
     # @param [Fixnum] down_by
@@ -217,16 +218,18 @@ module Watir
       assert_exists
       assert_has_input_devices_for :drag_and_drop_by
 
-      driver.action.
-             drag_and_drop_by(@element, right_by, down_by).
-             perform
+      element_call do
+        driver.action.
+               drag_and_drop_by(@element, right_by, down_by).
+               perform
+      end
     end
 
     #
     # Flashes (change background color far a moment) element.
     #
     # @example
-    #    browser.div(:id => "draggable").flash
+    #   browser.text_field(:name => "new_user_first_name").flash
     #
 
     def flash
@@ -250,44 +253,40 @@ module Watir
     #
 
     def value
-      assert_exists
-
-      begin
-        @element.attribute('value') || ''
-      rescue Selenium::WebDriver::Error::InvalidElementStateError
-        ""
-      end
+      attribute_value('value') || ''
+    rescue Selenium::WebDriver::Error::InvalidElementStateError
+      ''
     end
 
     #
     # Returns given attribute value of element.
     #
     # @example
-    #   browser.a(:id => "foo").attribute_value "href"
-    #   #=> "http://watir.com"
+    #   browser.a(:id => "link_2").attribute_value "title"
+    #   #=> "link_title_2"
     #
     # @param [String] attribute_name
-    # @return [String]
+    # @return [String, nil]
     #
 
     def attribute_value(attribute_name)
       assert_exists
-      @element.attribute attribute_name
+      element_call { @element.attribute attribute_name }
     end
 
     #
     # Returns outer (inner + element itself) HTML code of element.
     #
     # @example
-    #   browser.div(:id => "foo").html
-    #   #=> "<div id=\"foo\"><a>Click</a></div>"
+    #   browser.div(:id => 'foo').outer_html
+    #   #=> "<div id=\"foo\"><a href=\"#\">hello</a></div>"
     #
     # @return [String]
     #
 
     def outer_html
       assert_exists
-      execute_atom(:getOuterHtml, @element).strip
+      element_call { execute_atom(:getOuterHtml, @element) }.strip
     end
 
     alias_method :html, :outer_html
@@ -296,29 +295,30 @@ module Watir
     # Returns inner HTML code of element.
     #
     # @example
-    #   browser.div(:id => "foo").html
-    #   #=> "<a>Click</a>"
+    #   browser.div(:id => 'foo').inner_html
+    #   #=> "<a href=\"#\">hello</a>"
     #
     # @return [String]
     #
 
     def inner_html
       assert_exists
-      execute_atom(:getInnerHtml, @element).strip
+      element_call { execute_atom(:getInnerHtml, @element) }.strip
     end
 
     #
     # Sends sequence of keystrokes to element.
     #
     # @example
-    #   browser.div(:id => "foo").send_keys "Watir", :return
+    #   browser.text_field(:name => "new_user_first_name").send_keys "Watir", :return
     #
     # @param [String, Symbol] *args
     #
 
     def send_keys(*args)
       assert_exists
-      @element.send_keys(*args)
+      assert_writable
+      element_call { @element.send_keys(*args) }
     end
 
     #
@@ -330,7 +330,7 @@ module Watir
 
     def focus
       assert_exists
-      driver.execute_script "return arguments[0].focus()", @element
+      element_call { driver.execute_script "return arguments[0].focus()", @element }
     end
 
     #
@@ -341,7 +341,7 @@ module Watir
 
     def focused?
       assert_exists
-      @element == driver.switch_to.active_element
+      element_call { @element == driver.switch_to.active_element }
     end
 
     #
@@ -349,9 +349,9 @@ module Watir
     # Note that you may omit "on" from event name.
     #
     # @example
-    #   browser.a(:id => "foo").fire_event :click
-    #   browser.a(:id => "foo").fire_event "mousemove"
-    #   browser.a(:id => "foo").fire_event "onmouseover"
+    #   browser.button(:name => "new_user_button").fire_event :click
+    #   browser.button(:name => "new_user_button").fire_event "mousemove"
+    #   browser.button(:name => "new_user_button").fire_event "onmouseover"
     #
     # @param [String, Symbol] event_name
     #
@@ -360,7 +360,7 @@ module Watir
       assert_exists
       event_name = event_name.to_s.sub(/^on/, '').downcase
 
-      execute_atom :fireEvent, @element, event_name
+      element_call { execute_atom :fireEvent, @element, event_name }
     end
 
     #
@@ -372,11 +372,13 @@ module Watir
     end
 
     def next_sibling
-      locate_dom_element(:getNextSibling)
+      e = locate_dom_element(:getNextSibling)
+      e.nil? ? raise(UnknownObjectException, "Next Sibling does not exist for #{@selector}") : e
     end
 
     def previous_sibling
-      locate_dom_element(:getPreviousSibling)
+      e = locate_dom_element(:getPreviousSibling)
+      e.nil? ? raise(UnknownObjectException, "Next Sibling does not exist for #{@selector}") : e
     end
 
     #
@@ -404,7 +406,7 @@ module Watir
 
     def visible?
       assert_exists
-      @element.displayed?
+      element_call { @element.displayed? }
     end
 
     #
@@ -416,7 +418,7 @@ module Watir
 
     def present?
       exists? && visible?
-    rescue Selenium::WebDriver::Error::ObsoleteElementError, UnknownObjectException
+    rescue Selenium::WebDriver::Error::StaleElementReferenceError, UnknownObjectException
       # if the element disappears between the exists? and visible? calls,
       # consider it not present.
       false
@@ -426,10 +428,8 @@ module Watir
     # Returns given style property of this element.
     #
     # @example
-    #   browser.a(:id => "foo").style
-    #   #=> "display: block"
-    #   browser.a(:id => "foo").style "display"
-    #   #=> "block"
+    #   browser.button(:value => "Delete").style           #=> "border: 4px solid red;"
+    #   browser.button(:value => "Delete").style("border") #=> "4px solid red"
     #
     # @param [String] property
     # @return [String]
@@ -438,7 +438,7 @@ module Watir
     def style(property = nil)
       if property
         assert_exists
-        @element.style property
+        element_call { @element.style property }
       else
         attribute_value("style").to_s.strip
       end
@@ -499,39 +499,35 @@ module Watir
   protected
 
     def assert_exists
-      if @element and not Watir.always_locate?
-        assert_not_stale
-        return
+      begin
+        assert_not_stale if @element ||= @selector[:element]
+      rescue UnknownObjectException => ex
+        raise ex if @selector[:element] || !Watir.always_locate?
       end
 
-      @element = @selector[:element]
+      @element ||= locate
 
-      if @element
-        assert_not_stale
-      else
-        @element = locate
-
-        unless @element
-          raise UnknownObjectException, "unable to locate element, using #{selector_string}"
-        end
+      unless @element
+        raise UnknownObjectException, "unable to locate element, using #{selector_string}"
       end
     end
 
     def assert_not_stale
+      @parent.assert_not_stale
+      @parent.switch_to! if @parent.is_a? IFrame
       @element.enabled? # do a staleness check - any wire call will do.
     rescue Selenium::WebDriver::Error::ObsoleteElementError => ex
       # don't cache a stale element - it will never come back
-      @element = nil
+      reset!
       raise UnknownObjectException, "#{ex.message} - #{selector_string}"
     end
 
     def reset!
-      @parent.reset!
       @element = nil
     end
 
     def locate
-      @parent.assert_exists
+      @parent.is_a?(IFrame) ? @parent.switch_to! : @parent.assert_exists
       locator_class.new(@parent.wd, @selector, self.class.attribute_list).locate
     end
 
@@ -547,11 +543,15 @@ module Watir
 
     def attribute?(attribute)
       assert_exists
-      !!execute_atom(:getAttribute, @element, attribute.to_s.downcase)
+      element_call do
+        !!execute_atom(:getAttribute, @element, attribute.to_s.downcase)
+      end
     end
 
     def assert_enabled
-      raise ObjectDisabledException, "object is disabled #{selector_string}" unless @element.enabled?
+      unless element_call { @element.enabled? }
+        raise ObjectDisabledException, "object is disabled #{selector_string}"
+      end
     end
 
     def assert_writable
@@ -574,6 +574,21 @@ module Watir
       end
     end
 
+    def element_call
+      yield
+    rescue Selenium::WebDriver::Error::StaleElementReferenceError
+      raise unless Watir.always_locate?
+      reset!
+      assert_exists
+      retry
+        # Workaround for Google issue: https://code.google.com/p/chromedriver/issues/detail?id=92
+    rescue Selenium::WebDriver::Error::UnknownError => ex
+      raise unless ex.message.include?("Element is not clickable at point")
+      reset!
+      assert_exists
+      retry
+    end
+
     def method_missing(meth, *args, &blk)
       method = meth.to_s
       if method =~ ElementLocator::WILDCARD_ATTRIBUTE
@@ -586,7 +601,7 @@ module Watir
     def locate_dom_element(method)
       assert_exists
 
-      e = execute_atom method, @element
+      e = element_call { execute_atom method, @element }
 
       if e.kind_of?(Selenium::WebDriver::Element)
         Watir.element_class_for(e.tag_name.downcase).new(@parent, :element => e)
