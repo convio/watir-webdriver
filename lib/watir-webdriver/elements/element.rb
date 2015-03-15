@@ -489,7 +489,7 @@ module Watir
         assert_element_found # don't re-lookup elements
       end
 
-      @parent.wait_for_exists
+      check_parent(:wait_for_exists)
       begin
         Watir::Wait.until { exists? }
       rescue Watir::Wait::TimeoutError
@@ -505,7 +505,7 @@ module Watir
     def wait_for_present
       return if present? # short circuit for chained elements
 
-      @parent.wait_for_present
+      check_parent(:wait_for_present)
       wait_for_exists
       begin
         Watir::Wait.until { present? }
@@ -534,10 +534,10 @@ module Watir
 
     # Ensure that the element isn't stale, by relocating if it is (unless always_locate = false)
     def ensure_not_stale
-      @parent.ensure_not_stale
+      check_parent(:ensure_not_stale)
       @parent.switch_to! if @parent.is_a? IFrame
       if stale?
-        if Watir.always_locate? && ! @selector[:element]
+        if Watir.always_locate? && !@selector[:element]
           @element = locate
         else
           reset!
@@ -565,11 +565,17 @@ module Watir
     end
 
     def locate
-      @parent.is_a?(IFrame) ? @parent.switch_to! : @parent.assert_exists
+      @parent.is_a?(IFrame) ? @parent.switch_to! : check_parent(:assert_exists)
       locator_class.new(@parent.wd, @selector, self.class.attribute_list).locate
     end
 
   private
+
+      def check_parent(check = :assert_exists)
+        @parent.send check
+      rescue @parent.send(:unknown_exception) => ex
+        @parent.is_a?(Watir::Browser) ? raise : raise(unknown_exception, ex.message)
+      end
 
     def unknown_exception
       Watir::Exception::UnknownObjectException

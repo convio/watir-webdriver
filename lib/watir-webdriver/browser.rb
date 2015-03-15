@@ -379,7 +379,7 @@ module Watir
 
     def assert_exists
       if @closed
-        raise Exception::Error, "browser was closed"
+        raise unknown_exception, "browser was closed"
       elsif !window.present?
         raise Exception::NoMatchingWindowFoundException, "browser window was closed"
       else
@@ -418,6 +418,10 @@ module Watir
 
     def wrap_element(element)
       Watir.element_class_for(element.tag_name.downcase).new(self, :element => element)
+    end
+
+    def unknown_exception
+      Watir::Exception::Error
     end
 
   end # Browser

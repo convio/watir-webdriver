@@ -3,7 +3,7 @@ module Watir
   class IFrame < HTMLElement
 
     def locate
-      @parent.wait_for_exists
+      check_parent(:assert_exists)
 
       locator = locator_class.new(@parent.wd, @selector.merge(:tag_name => frame_tag), self.class.attribute_list)
       element = locator.locate
