@@ -376,7 +376,7 @@ module Watir
     #
 
     def wd
-      assert_exists
+      assert_exists unless @element
       @element
     end
 
@@ -534,7 +534,7 @@ module Watir
 
     # Ensure that the element isn't stale, by relocating if it is (unless always_locate = false)
     def ensure_not_stale
-      check_parent(:ensure_not_stale)
+      check_parent(:assert_exists)
       @parent.switch_to! if @parent.is_a? IFrame
       if stale?
         if Watir.always_locate? && !@selector[:element]
@@ -571,11 +571,11 @@ module Watir
 
   private
 
-      def check_parent(check = :assert_exists)
-        @parent.send check
-      rescue @parent.send(:unknown_exception) => ex
-        @parent.is_a?(Watir::Browser) ? raise : raise(unknown_exception, ex.message)
-      end
+    def check_parent(check = :assert_exists)
+      @parent.send check
+    rescue @parent.send(:unknown_exception) => ex
+      @parent.is_a?(Watir::Browser) ? raise : raise(unknown_exception, ex.message)
+    end
 
     def unknown_exception
       Watir::Exception::UnknownObjectException
